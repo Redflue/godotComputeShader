@@ -1,0 +1,6 @@
+{
+	"Print":{
+		"prefix": ["print", "prt", "clg"],
+		"body": "GD.Print($1);"
+	},
+}
