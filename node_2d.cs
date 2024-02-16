@@ -1,22 +1,21 @@
 using Godot;
 using System;
-using ShaderTools;
 using Godot.Collections;
 using Agents;
+using Shaders;
 
 using System.Runtime.InteropServices;
 
 public partial class node_2d : Node2D
 {
+
+    Rid image;
+
     public override void _Ready()
     {
         base._Ready();
-
-        RenderingDevice rd = RenderingServer.CreateLocalRenderingDevice();
-
-        RDShaderFile shaderFile = GD.Load<RDShaderFile>("res://shaders/compute.glsl");
-        RDShaderSpirV shaderByteCode = shaderFile.GetSpirV();
-        Rid shader = rd.ShaderCreateFromSpirV(shaderByteCode);
+        ShaderHelper.CreateRendereringDevice();
+        Rid shader = ShaderHelper.LoadShader("res://shaders/compute.glsl");
 
         int agentsNum = 10;
         int sizeOfAgent = AgentPacker.agentSize;
@@ -33,29 +32,25 @@ public partial class node_2d : Node2D
             AgentPacker.PackAgentInByteArray(agents[i], agentBytes, i*sizeOfAgent);
         }
         
-        Rid buffer = rd.StorageBufferCreate((uint)agentBytes.Length, agentBytes);
-
+        Rid buffer = ShaderHelper.renderingDevice.StorageBufferCreate((uint)agentBytes.Length, agentBytes);
         RDUniform uniform = new RDUniform {
             UniformType = RenderingDevice.UniformType.StorageBuffer,
             Binding = 0,
         };
         uniform.AddId(buffer);
+        Rid uniformSet = ShaderHelper.renderingDevice.UniformSetCreate(new Array<RDUniform> {uniform}, shader, 0);
 
-        Rid uniformSet = rd.UniformSetCreate(new Array<RDUniform> {uniform}, shader, 0);
+        Rid pipeline = ShaderHelper.renderingDevice.ComputePipelineCreate(shader);
+        long computeList = ShaderHelper.renderingDevice.ComputeListBegin();
+        ShaderHelper.renderingDevice.ComputeListBindComputePipeline(computeList, pipeline);
+        ShaderHelper.renderingDevice.ComputeListBindUniformSet(computeList, uniformSet, 0);
+        ShaderHelper.renderingDevice.ComputeListDispatch(computeList, (uint)agentsNum/2, 1,1);
+        ShaderHelper.renderingDevice.ComputeListEnd();
 
-        var pipeline = rd.ComputePipelineCreate(shader);
-        var computeList = rd.ComputeListBegin();
-        rd.ComputeListBindComputePipeline(computeList, pipeline);
-        rd.ComputeListBindUniformSet(computeList, uniformSet, 0);
-        rd.ComputeListDispatch(computeList, (uint)agentsNum/2, 1,1);
-        rd.ComputeListEnd();
+        ShaderHelper.renderingDevice.Submit();
+        ShaderHelper.renderingDevice.Sync();
 
-        rd.Submit();
-        rd.Sync();
-
-        byte[] outBytes = rd.BufferGetData(buffer);
-        // Agent[] output = new Agent[agentsNum];
-        //Buffer.BlockCopy(outBytes, 0, output, 0, outBytes.Length);
+        byte[] outBytes = ShaderHelper.renderingDevice.BufferGetData(buffer);
         Agent[] output = AgentPacker.PackBytesToAgentArray(outBytes);
 
         for (int i = 0; i<agentsNum; i++) {
@@ -65,5 +60,16 @@ public partial class node_2d : Node2D
         }
 
         GD.Print("HELLO! TEST");
+    }
+
+    private void CreateImage() {
+        
+    }
+
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+
+
     }
 }
