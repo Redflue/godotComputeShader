@@ -13,7 +13,12 @@ config_version=5
 config/name="C# Test"
 run/main_scene="res://node_2d.tscn"
 config/features=PackedStringArray("4.2", "C#", "GL Compatibility")
+boot_splash/bg_color=Color(0, 0, 0, 1)
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/mode=2
 
 [dotnet]
 
@@ -22,3 +27,4 @@ project/assembly_name="C# Test"
 [rendering]
 
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
