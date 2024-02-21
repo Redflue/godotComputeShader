@@ -17,5 +17,16 @@ namespace Shaders {
 
             return shader;
         }
+
+        public static RDUniform CreateStorageBufferUniform(byte[] bytes, int binding = 0) {
+            Rid buffer = renderingDevice.StorageBufferCreate((uint)bytes.Length,bytes);
+            RDUniform uniform = new()
+            {
+                UniformType = RenderingDevice.UniformType.StorageBuffer,
+                Binding = binding
+            };
+            uniform.AddId(buffer);
+            return uniform;
+        }
     }
 }

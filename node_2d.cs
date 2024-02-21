@@ -4,8 +4,6 @@ using Godot.Collections;
 using Agents;
 using Shaders;
 
-using System.Runtime.InteropServices;
-
 public partial class node_2d : Node2D
 {
 
@@ -14,13 +12,16 @@ public partial class node_2d : Node2D
     RDUniform colorMapUniform;
     [Export] TextureRect texRect {get; set;}
 
+    RDUniform agentUniform;
+    RDUniform settingsUniform;
+
     Rid uniformSet;
     Rid pipeline;
     int agentsNum = 500000;
 
     Rid fadeShader;
     Rid fadePipeline;
-
+    Rid agentShader;
 
     public override void _Ready()
     {
@@ -54,13 +55,19 @@ public partial class node_2d : Node2D
             Binding = 0,
         };
         uniform.AddId(buffer);
-        uniformSet = ShaderHelper.renderingDevice.UniformSetCreate(new Array<RDUniform> {uniform, colorMapUniform}, shader, 0);
+        agentUniform = uniform;
+
+        byte[] settingsBuffer = AgentPacker.CreateSettingsBuffer(3,1f);
+        settingsUniform = ShaderHelper.CreateStorageBufferUniform(settingsBuffer, 2);
+        agentShader = shader;
+
+        uniformSet = ShaderHelper.renderingDevice.UniformSetCreate(new Array<RDUniform> {uniform, colorMapUniform, settingsUniform}, shader, 0);
 
         pipeline = ShaderHelper.renderingDevice.ComputePipelineCreate(shader);
         long computeList = ShaderHelper.renderingDevice.ComputeListBegin();
         ShaderHelper.renderingDevice.ComputeListBindComputePipeline(computeList, pipeline);
         ShaderHelper.renderingDevice.ComputeListBindUniformSet(computeList, uniformSet, 0);
-        ShaderHelper.renderingDevice.ComputeListDispatch(computeList, (uint)agentsNum/2, 1,1);
+        ShaderHelper.renderingDevice.ComputeListDispatch(computeList, (uint)agentsNum/8, 1,1);
         ShaderHelper.renderingDevice.ComputeListEnd();
 
         //GD.Print();
@@ -84,6 +91,12 @@ public partial class node_2d : Node2D
         RunFadeShader();
 
         DisplayImage();
+    }
+
+    private void GenerateUniformSet() {
+        if (uniformSet != null)
+            ShaderHelper.renderingDevice.FreeRid(uniformSet);
+        uniformSet = ShaderHelper.renderingDevice.UniformSetCreate(new Array<RDUniform> {agentUniform, colorMapUniform, settingsUniform}, agentShader, 0);
     }
 
     private void QueueFadeShader() {
@@ -164,5 +177,14 @@ public partial class node_2d : Node2D
             RunFadeShader();
             DisplayImage();
         }
+    }
+
+    public void applySettings(int scanDist, float speed) {
+        //settingsUniform.Free();
+
+        byte[] settingsBuffer = AgentPacker.CreateSettingsBuffer(scanDist,speed);
+        settingsUniform = ShaderHelper.CreateStorageBufferUniform(settingsBuffer, 2);
+        GD.Print("apply settings ; ", scanDist, " : ", speed);
+        GenerateUniformSet();
     }
 }

@@ -1,15 +1,29 @@
-[gd_scene load_steps=2 format=3 uid="uid://3kjqs2wpbw0w"]
+[gd_scene load_steps=10 format=3 uid="uid://3kjqs2wpbw0w"]
 
 [ext_resource type="Script" path="res://node_2d.cs" id="1_14muv"]
+[ext_resource type="Theme" uid="uid://dkp05t7o6uemf" path="res://guiTheme.tres" id="2_1gxk2"]
+[ext_resource type="Script" path="res://SettingsMenu.cs" id="3_cmgei"]
 
-[node name="Node2D" type="Node2D" node_paths=PackedStringArray("texRect")]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2hki0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ewsjg"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h5qde"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h1f7v"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qcqqm"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hodl5"]
+
+[node name="Controller" type="Node2D" node_paths=PackedStringArray("texRect")]
 script = ExtResource("1_14muv")
 texRect = NodePath("CanvasLayer/TextureRect")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="TextureRect" type="TextureRect" parent="CanvasLayer"]
-texture_filter = 1
+texture_filter = 6
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -18,3 +32,62 @@ offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" node_paths=PackedStringArray("Controller")]
+anchors_preset = -1
+anchor_right = 0.222
+anchor_bottom = 1.0
+theme = ExtResource("2_1gxk2")
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+script = ExtResource("3_cmgei")
+Controller = NodePath("../..")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/MarginContainer"]
+layout_mode = 2
+
+[node name="SettingsEnable" type="CheckBox" parent="CanvasLayer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_2hki0")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_ewsjg")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_h5qde")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_h1f7v")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_qcqqm")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_hodl5")
+button_pressed = true
+text = "Show settings"
+
+[node name="Settings" type="VBoxContainer" parent="CanvasLayer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Speed" type="SpinBox" parent="CanvasLayer/MarginContainer/VBoxContainer/Settings"]
+layout_mode = 2
+min_value = 0.1
+max_value = 20.0
+step = 0.1
+value = 1.0
+alignment = 1
+update_on_text_changed = true
+prefix = "Speed:"
+select_all_on_focus = true
+
+[node name="ScanDist" type="SpinBox" parent="CanvasLayer/MarginContainer/VBoxContainer/Settings"]
+layout_mode = 2
+min_value = 2.0
+max_value = 50.0
+value = 3.0
+alignment = 1
+update_on_text_changed = true
+prefix = "Scan distance:"
+select_all_on_focus = true
+
+[node name="Apply" type="Button" parent="CanvasLayer/MarginContainer/VBoxContainer/Settings"]
+layout_mode = 2
+text = "Apply settings"
+
+[connection signal="toggled" from="CanvasLayer/MarginContainer/VBoxContainer/SettingsEnable" to="CanvasLayer/MarginContainer" method="OnSettingsEnabled"]
+[connection signal="pressed" from="CanvasLayer/MarginContainer/VBoxContainer/Settings/Apply" to="CanvasLayer/MarginContainer" method="OnApplyPressed"]

@@ -13,6 +13,10 @@ layout(set = 0, binding = 0, std430) restrict buffer AgentBuffer {
     Agent agents[];
 } agentBuffer;
 layout(rgba8, binding = 1) restrict uniform image2D colorMap;
+layout(set = 0, binding = 2, std430) restrict buffer SettingsBuffer {
+    int scanDist;
+    float speed;
+} settings;
 
 bool isPosInside(ivec2 coords, ivec2 size) {
     return (coords.x < size.x && coords.x > 0 && coords.y < size.y && coords.y > 0);
@@ -24,8 +28,8 @@ ivec2 clampInside(ivec2 coords, ivec2 size) {
 
 float PI = 3.141592654;
 
-int scanDist = 4;
-float movespeed = 2.0;
+int scanDist = settings.scanDist;
+float movespeed = settings.speed;
 
 float senseAverageOf(ivec2 pos) {
     float surroundingAverage = 0.0;
@@ -73,7 +77,15 @@ void main() {
         ivec2 insidePos = clampInside(coords, imgSize);
         agent.x = float(insidePos.x);
         agent.y = float(insidePos.y);
-        agent.angle -= PI/2;
+
+        ivec2 cenvec = ivec2(imgSize.x/2 - insidePos.x, imgSize.y/2 - insidePos.y);
+        if (cenvec.x == 0 && cenvec.y == 0) {
+            agent.angle -= PI/2;
+        } else {
+            float cenangl = atan(cenvec.y, cenvec.x);
+            agent.angle = cenangl;
+        }
+
     }
 
     float leftAngle = agent.angle - PI/4.0;

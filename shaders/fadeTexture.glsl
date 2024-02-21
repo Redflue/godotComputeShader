@@ -13,6 +13,10 @@ layout(set = 0, binding = 0, std430) restrict buffer AgentBuffer {
     Agent agents[];
 } agentBuffer;
 layout(rgba8, binding = 1) restrict uniform image2D colorMap;
+layout(set = 0, binding = 2, std430) restrict buffer SettingsBuffer {
+    int scanDist;
+    float speed;
+} settings;
 
 bool isPosInside(ivec2 coords, ivec2 size) {
     return (coords.x < size.x && coords.x > 0 && coords.y < size.y && coords.y > 0);
